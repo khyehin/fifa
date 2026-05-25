@@ -208,6 +208,13 @@
         .toolbar-input { min-width: 150px; }
         .status-pill { min-width: 64px; }
         .summary-number { font-size: 1.25rem; font-weight: 750; }
+        .summary-tile {
+            border: 1px solid var(--soft-line);
+            border-radius: 8px;
+            padding: .8rem .9rem;
+            background: #fbfcfb;
+            min-height: 76px;
+        }
         .sticky-action { position: sticky; right: 0; background: inherit; }
         h1.h3 { font-size:1.55rem; }
         h2.h5 { font-size:1.05rem; }

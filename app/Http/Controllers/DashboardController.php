@@ -15,13 +15,14 @@ class DashboardController extends Controller
     {
         $request = $this->withDefaultAll($request);
         $entries = $this->filteredEntries($request)->get();
+        $systemEntries = MatchEntry::query()->get();
 
-        $totals = [
-            'bet_amount' => $entries->sum('bet_amount'),
-            'black_red' => $entries->sum('black_red_amount'),
-            'my_winlose' => $entries->sum('my_winlose'),
-            'run_ticket' => $entries->sum('run_ticket'),
-            'net_total' => $entries->sum(fn ($entry) => $entry->net_total),
+        $systemTotals = [
+            'bet_amount' => $systemEntries->sum('bet_amount'),
+            'black_red' => $systemEntries->sum('black_red_amount'),
+            'my_winlose' => $systemEntries->sum('my_winlose'),
+            'run_ticket' => $systemEntries->sum('run_ticket'),
+            'net_total' => $systemEntries->sum(fn ($entry) => $entry->net_total),
         ];
 
         $matchByDate = FootballMatch::with('entries')
@@ -48,7 +49,7 @@ class DashboardController extends Controller
 
         $weeklySheets = $this->weeklySheets($request, $entries, $agents);
 
-        return view('dashboard', compact('entries', 'matchByDate', 'weeklySheets', 'totals'));
+        return view('dashboard', compact('entries', 'matchByDate', 'weeklySheets', 'systemTotals'));
     }
 
     private function filteredEntries(Request $request)

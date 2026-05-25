@@ -9,6 +9,45 @@
     <a href="{{ route('matches.create') }}" class="btn btn-primary">New Match</a>
 </div>
 
+<div class="card card-body mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="h5 mb-0">System Summary</h2>
+        <div class="text-muted small">All records</div>
+    </div>
+    <div class="row g-2">
+        <div class="col-md">
+            <div class="summary-tile">
+                <div class="text-muted small">Bet Amount</div>
+                <div class="summary-number"><x-money :value="$systemTotals['bet_amount']" /></div>
+            </div>
+        </div>
+        <div class="col-md">
+            <div class="summary-tile">
+                <div class="text-muted small">Win/Lose</div>
+                <div class="summary-number"><x-money :value="$systemTotals['black_red']" /></div>
+            </div>
+        </div>
+        <div class="col-md">
+            <div class="summary-tile">
+                <div class="text-muted small">My Win/Lose</div>
+                <div class="summary-number"><x-money :value="$systemTotals['my_winlose']" /></div>
+            </div>
+        </div>
+        <div class="col-md">
+            <div class="summary-tile">
+                <div class="text-muted small">Run Tickets</div>
+                <div class="summary-number"><x-money :value="$systemTotals['run_ticket']" /></div>
+            </div>
+        </div>
+        <div class="col-md">
+            <div class="summary-tile">
+                <div class="text-muted small">Total</div>
+                <div class="summary-number"><x-money :value="$systemTotals['net_total']" /></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <form class="card card-body mb-3 py-3">
     <div class="row g-2 align-items-end">
         <div class="col-md-4"><x-date-range /></div>
