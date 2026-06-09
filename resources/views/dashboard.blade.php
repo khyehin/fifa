@@ -35,6 +35,12 @@
         </div>
         <div class="col-md">
             <div class="summary-tile">
+                <div class="text-muted small">Rebate</div>
+                <div class="summary-number"><x-money :value="$systemTotals['rebate_amount']" /></div>
+            </div>
+        </div>
+        <div class="col-md">
+            <div class="summary-tile">
                 <div class="text-muted small">Run Tickets</div>
                 <div class="summary-number"><x-money :value="$systemTotals['run_ticket']" /></div>
             </div>
@@ -68,7 +74,7 @@
             <table class="table table-sm table-bordered align-middle mb-0">
                 <thead>
                     <tr class="table-success">
-                        <th colspan="7">
+                        <th colspan="8">
                             <div class="d-flex justify-content-between align-items-center">
                                 <span>{{ $date }}</span>
                                 <a class="btn btn-sm btn-outline-dark" href="{{ route('match-dates.show', $date) }}">Open Date Sheet</a>
@@ -76,13 +82,14 @@
                         </th>
                     </tr>
                     <tr>
-                        <th>Match</th><th>Home</th><th>Away</th><th>Lines</th><th>Win/Lose</th><th>Run Tickets</th><th>Total</th>
+                        <th>Match</th><th>Home</th><th>Away</th><th>Lines</th><th>Win/Lose</th><th>Rebate</th><th>Run Tickets</th><th>Total</th>
                     </tr>
                 </thead>
                 <tbody>
                 @foreach($matches as $match)
                     @php
                         $matchWinLose = $match->entries->sum('black_red_amount');
+                        $matchRebate = $match->entries->sum('rebate_amount');
                         $matchRun = $match->entries->sum('run_ticket');
                         $matchTotal = $match->entries->sum(fn($entry) => $entry->net_total);
                     @endphp
@@ -92,6 +99,7 @@
                         <td>{{ $match->away_team }}</td>
                         <td>{{ $match->entries->count() }}</td>
                         <td><x-money :value="$matchWinLose" /></td>
+                        <td><x-money :value="$matchRebate" /></td>
                         <td><x-money :value="$matchRun" /></td>
                         <td><x-money :value="$matchTotal" /></td>
                     </tr>
@@ -123,6 +131,7 @@
                     <th class="text-danger">Win/Lose</th>
                     <th class="text-danger percent-col">MY %</th>
                     <th class="text-danger">My Win/Lose</th>
+                    <th>Rebate</th>
                     <th>Run Tickets</th>
                     <th>Total</th>
                 </tr>
@@ -143,6 +152,7 @@
                     <td><x-money :value="$row['black_red']" /></td>
                     <td class="percent-col">{{ number_format((float) $row['my_percent'], 4) }}</td>
                     <td><x-money :value="$row['my_winlose']" /></td>
+                    <td><x-money :value="$row['rebate_amount']" /></td>
                     <td><x-money :value="$row['run_ticket']" /></td>
                     <td><x-money :value="$row['net_total']" /></td>
                 </tr>
@@ -154,6 +164,7 @@
                     <td><x-money :value="$sheet['totals']['black_red']" /></td>
                     <td></td>
                     <td><x-money :value="$sheet['totals']['my_winlose']" /></td>
+                    <td><x-money :value="$sheet['totals']['rebate_amount']" /></td>
                     <td><x-money :value="$sheet['totals']['run_ticket']" /></td>
                     <td><x-money :value="$sheet['totals']['net_total']" /></td>
                 </tr>

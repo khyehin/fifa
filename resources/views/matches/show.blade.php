@@ -7,6 +7,8 @@
         <div class="text-muted">{{ $match->match_date->format('Y-m-d') }} · {{ $match->home_team }} vs {{ $match->away_team }}</div>
     </div>
     <div class="d-flex gap-2">
+        <button id="ha-win" class="btn btn-outline-dark" type="button">H/A Win</button>
+        <button id="ou-win" class="btn btn-outline-dark" type="button">O/U Win</button>
         <button id="save-all-entries" class="btn btn-success">Save</button>
         <a href="{{ route('matches.edit', $match) }}" class="btn btn-outline-primary">Edit Match</a>
         <a href="{{ route('matches.index') }}" class="btn btn-outline-secondary">Back</a>
@@ -15,8 +17,11 @@
 
 <div class="row g-3 mb-3" id="match-totals">
     <div class="col-md"><div class="card card-body"><div class="text-muted small">Bet Amount</div><div class="summary-number" data-total="bet_amount">0.00</div></div></div>
+    <div class="col-md"><div class="card card-body"><div class="text-muted small">H/A Total</div><div class="summary-number" data-total="ha">0.00</div></div></div>
+    <div class="col-md"><div class="card card-body"><div class="text-muted small">O/U Total</div><div class="summary-number" data-total="ou">0.00</div></div></div>
     <div class="col-md"><div class="card card-body"><div class="text-muted small">Win/Loss</div><div class="summary-number" data-total="black_red_amount">0.00</div></div></div>
     <div class="col-md"><div class="card card-body"><div class="text-muted small">My Win/Loss</div><div class="summary-number" data-total="my_winlose">0.00</div></div></div>
+    <div class="col-md"><div class="card card-body"><div class="text-muted small">Rebate</div><div class="summary-number" data-total="rebate_amount">0.00</div></div></div>
     <div class="col-md"><div class="card card-body"><div class="text-muted small">Run Ticket</div><div class="summary-number" data-total="run_ticket">0.00</div></div></div>
     <div class="col-md"><div class="card card-body"><div class="text-muted small">Net Total</div><div class="summary-number" data-total="net_total">0.00</div></div></div>
 </div>
@@ -40,6 +45,8 @@
         <div class="col-lg-2"><label class="form-label">Black/Red</label><input type="text" inputmode="decimal" name="black_red_amount" class="form-control signed-money-input" value="0.00"></div>
         <div class="col-lg-1"><label class="form-label">MY %</label><input type="number" step="0.0001" name="my_percent" class="form-control percent-input"></div>
         <div class="col-lg-1"><label class="form-label">Bet x MY%</label><input id="entry-bet-share" class="form-control" value="0.00" readonly></div>
+        <div class="col-lg-1"><label class="form-label">Rebate %</label><input type="number" step="0.0001" name="rebate_percent" class="form-control percent-input" value="0"></div>
+        <div class="col-lg-1"><label class="form-label">Rebate</label><input id="entry-rebate-amount" class="form-control" value="0.00" readonly></div>
         <div class="col-lg-1"><label class="form-label">Run</label><input type="text" inputmode="decimal" name="run_ticket" class="form-control signed-money-input"></div>
         <div class="col-lg-1"><label class="form-label">Remarks</label><input name="remarks" class="form-control"></div>
         <div class="col-lg-1"><button class="btn btn-primary w-100">Add</button></div>
@@ -49,7 +56,7 @@
 <div class="card card-body">
     <div class="table-responsive">
         <table class="table table-sm table-bordered align-middle auto-table" id="entries-table">
-            <thead><tr><th>User</th><th>Bet Amount</th><th>H/A</th><th>O/U</th><th>Black H/O, Red A/U</th><th class="percent-col">MY %</th><th>Bet x MY%</th><th>My Win/Lose</th><th>Run Tickets</th><th>Total</th><th>Remarks</th><th></th></tr></thead>
+            <thead><tr><th>User</th><th>Bet Amount</th><th>H/A</th><th>O/U</th><th>Black H/O, Red A/U</th><th class="percent-col">MY %</th><th>Bet x MY%</th><th>My Win/Lose</th><th class="percent-col">Rebate %</th><th>Rebate</th><th>Run Tickets</th><th>Net Total</th><th>Remarks</th><th></th></tr></thead>
             <tbody>
             @foreach($match->entries->sortBy(fn($entry) => $entry->agent->username) as $entry)
                 <tr data-entry-id="{{ $entry->id }}">
@@ -61,10 +68,12 @@
                     <td class="percent-col"><input class="excel-input row-number percent-input" data-field="my_percent" type="number" step="0.0001" value="{{ $entry->my_percent }}"></td>
                     <td data-field-display="bet_share" data-value="{{ $entry->bet_share }}"><x-money :value="$entry->bet_share" /></td>
                     <td data-field-display="my_winlose" data-value="{{ $entry->my_winlose }}"><x-money :value="$entry->my_winlose" /></td>
+                    <td class="percent-col"><input class="excel-input row-number percent-input" data-field="rebate_percent" type="number" step="0.0001" value="{{ $entry->rebate_percent }}"></td>
+                    <td data-field-display="rebate_amount" data-value="{{ $entry->rebate_amount }}"><x-money :value="$entry->rebate_amount" /></td>
                     <td><input class="excel-input row-number signed-money-input" data-field="run_ticket" type="text" inputmode="decimal" value="{{ (float) $entry->run_ticket < 0 ? '(' . number_format(abs((float) $entry->run_ticket), 2) . ')' : number_format((float) $entry->run_ticket, 2) }}"></td>
                     <td data-field-display="net_total" data-value="{{ $entry->net_total }}"><x-money :value="$entry->net_total" /></td>
                     <td><input class="excel-input" data-field="remarks" value="{{ $entry->remarks }}"></td>
-                    <td class="text-end sticky-action"><button class="btn btn-sm btn-outline-danger" data-delete-entry>Delete</button></td>
+                    <td class="text-end sticky-action"><button class="btn btn-sm btn-outline-primary" data-edit-entry type="button">Edit</button> <button class="btn btn-sm btn-outline-danger" data-delete-entry type="button">Delete</button></td>
                 </tr>
             @endforeach
             </tbody>
@@ -117,9 +126,16 @@ function unformatSignedInput(input) {
 }
 
 function setMoneyCell(cell, value) {
+    if (!cell) return;
     cell.dataset.value = Number(value || 0);
     cell.textContent = money(value);
-    cell.classList.toggle('money-negative', Number(value) < 0);
+    syncNegativeState(cell, Number(value) < 0);
+}
+
+function syncNegativeState(element, negative) {
+    element.classList.toggle('money-negative', negative);
+    element.classList.toggle('is-negative', negative);
+    element.querySelectorAll('.money-negative').forEach(child => child.classList.toggle('money-negative', negative));
 }
 
 function calculateBetShare(row) {
@@ -127,6 +143,34 @@ function calculateBetShare(row) {
     const percent = Number(row.querySelector('[data-field="my_percent"]')?.value || 0);
 
     return bet * percent;
+}
+
+function calculateRowValues(row) {
+    const blackRed = parseMoneyInput(row.querySelector('[data-field="black_red_amount"]')?.value || 0);
+    const myPercent = Number(row.querySelector('[data-field="my_percent"]')?.value || 0);
+    const rebatePercent = Number(row.querySelector('[data-field="rebate_percent"]')?.value || 0);
+    const runTicket = parseMoneyInput(row.querySelector('[data-field="run_ticket"]')?.value || 0);
+    const myWinlose = blackRed * myPercent * -1;
+    const rebate = blackRed < 0 ? Math.abs(blackRed) * rebatePercent : 0;
+    const netTotal = myWinlose - rebate - runTicket;
+
+    return {blackRed, myWinlose, rebate, netTotal};
+}
+
+function refreshRowPreview(row) {
+    const values = calculateRowValues(row);
+    setMoneyCell(row.querySelector('[data-field-display="bet_share"]'), calculateBetShare(row));
+    setMoneyCell(row.querySelector('[data-field-display="my_winlose"]'), values.myWinlose);
+    setMoneyCell(row.querySelector('[data-field-display="rebate_amount"]'), values.rebate);
+    setMoneyCell(row.querySelector('[data-field-display="net_total"]'), values.netTotal);
+}
+
+function updateNewRebateAmount() {
+    const form = document.querySelector('#new-entry-form');
+    const blackRed = parseMoneyInput(form.black_red_amount.value || 0);
+    const rebatePercent = Number(form.rebate_percent.value || 0);
+    const rebate = blackRed < 0 ? Math.abs(blackRed) * rebatePercent : 0;
+    document.querySelector('#entry-rebate-amount').value = money(rebate);
 }
 
 function fitInput(input) {
@@ -149,6 +193,8 @@ function updateRowBlackRed(row) {
     target.value = String(ha + ou);
     formatSignedInput(target);
     markDirty(target);
+    refreshRowPreview(row);
+    recalcTotals();
 }
 
 function updateNewBlackRed() {
@@ -156,6 +202,7 @@ function updateNewBlackRed() {
     const total = parseMoneyInput(form.ha.value || 0) + parseMoneyInput(form.ou.value || 0);
     form.black_red_amount.value = String(total);
     formatSignedInput(form.black_red_amount);
+    updateNewRebateAmount();
 }
 
 function updateNewBetShare() {
@@ -164,19 +211,41 @@ function updateNewBetShare() {
     target.value = money(Number(form.bet_amount.value || 0) * Number(form.my_percent.value || 0));
 }
 
+function applyResult(winner) {
+    const loser = winner === 'ha' ? 'ou' : 'ha';
+    document.querySelectorAll('#entries-table tbody tr').forEach(row => {
+        const winnerInput = row.querySelector(`[data-field="${winner}"]`);
+        const loserInput = row.querySelector(`[data-field="${loser}"]`);
+        if (!winnerInput || !loserInput) return;
+
+        const winnerAmount = Math.abs(parseMoneyInput(winnerInput.value || 0));
+        const loserAmount = Math.abs(parseMoneyInput(loserInput.value || 0));
+        winnerInput.value = String(winnerAmount);
+        loserInput.value = String(loserAmount * -1);
+        formatSignedInput(winnerInput);
+        formatSignedInput(loserInput);
+        markDirty(winnerInput);
+        markDirty(loserInput);
+        updateRowBlackRed(row);
+    });
+}
+
 function recalcTotals() {
-    const totals = {bet_amount:0, black_red_amount:0, my_winlose:0, run_ticket:0, net_total:0};
+    const totals = {bet_amount:0, ha:0, ou:0, black_red_amount:0, my_winlose:0, rebate_amount:0, run_ticket:0, net_total:0};
     document.querySelectorAll('#entries-table tbody tr').forEach(row => {
         totals.bet_amount += Number(row.querySelector('[data-field="bet_amount"]')?.value || 0);
+        totals.ha += parseMoneyInput(row.querySelector('[data-field="ha"]')?.value || 0);
+        totals.ou += parseMoneyInput(row.querySelector('[data-field="ou"]')?.value || 0);
         totals.black_red_amount += parseMoneyInput(row.querySelector('[data-field="black_red_amount"]')?.value || 0);
         totals.my_winlose += Number(row.querySelector('[data-field-display="my_winlose"]')?.dataset.value || 0);
+        totals.rebate_amount += Number(row.querySelector('[data-field-display="rebate_amount"]')?.dataset.value || 0);
         totals.run_ticket += parseMoneyInput(row.querySelector('[data-field="run_ticket"]')?.value || 0);
         totals.net_total += Number(row.querySelector('[data-field-display="net_total"]')?.dataset.value || 0);
     });
     Object.entries(totals).forEach(([key, value]) => {
         const target = document.querySelector(`[data-total="${key}"]`);
         target.textContent = money(value);
-        target.classList.toggle('money-negative', value < 0);
+        syncNegativeState(target, value < 0);
     });
 }
 
@@ -195,6 +264,20 @@ async function quickCreate(username) {
     return agent;
 }
 
+async function responseErrorMessage(response, fallback) {
+    try {
+        const payload = await response.json();
+        return payload.message || fallback;
+    } catch (error) {
+        return fallback;
+    }
+}
+
+document.querySelector('#entry-username').addEventListener('input', event => {
+    const username = event.target.value.trim();
+    document.querySelector('#entry-agent-id').value = agents[username]?.id || '';
+});
+
 document.querySelector('#entry-username').addEventListener('change', async event => {
     const username = event.target.value.trim();
     if (!username) return;
@@ -206,12 +289,16 @@ document.querySelector('#entry-username').addEventListener('change', async event
     form.bet_amount.value = agent.default_bet_amount ?? 0;
     form.my_percent.value = agent.my_percent ?? 1;
     form.run_ticket.value = agent.run_ticket ?? 0;
+    form.rebate_percent.value = 0;
     form.bet_amount.readOnly = Boolean(agent.bet_amount_locked);
     updateNewBetShare();
+    updateNewRebateAmount();
 });
 
 document.querySelector('#new-entry-form').bet_amount.addEventListener('input', updateNewBetShare);
 document.querySelector('#new-entry-form').my_percent.addEventListener('input', updateNewBetShare);
+document.querySelector('#new-entry-form').rebate_percent.addEventListener('input', updateNewRebateAmount);
+document.querySelector('#new-entry-form').black_red_amount.addEventListener('input', updateNewRebateAmount);
 document.querySelector('#new-entry-form').ha.addEventListener('input', () => {
     updateNewBlackRed();
 });
@@ -231,7 +318,7 @@ document.querySelector('#new-entry-form').addEventListener('submit', async event
         headers: {'X-CSRF-TOKEN': csrf, 'Accept': 'application/json'},
         body: new FormData(event.target)
     });
-    if (!response.ok) return alert('Entry could not be saved.');
+    if (!response.ok) return alert(await responseErrorMessage(response, 'Entry could not be saved.'));
     window.location.reload();
 });
 
@@ -243,11 +330,12 @@ async function saveRow(row) {
         headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json'},
         body: JSON.stringify(data)
     });
-    if (!response.ok) throw new Error('Save failed');
+    if (!response.ok) throw new Error(await responseErrorMessage(response, 'Save failed'));
     const payload = await response.json();
     row.querySelectorAll('.signed-money-input').forEach(formatSignedInput);
     setMoneyCell(row.querySelector('[data-field-display="bet_share"]'), payload.bet_share ?? calculateBetShare(row));
     setMoneyCell(row.querySelector('[data-field-display="my_winlose"]'), payload.my_winlose);
+    setMoneyCell(row.querySelector('[data-field-display="rebate_amount"]'), payload.rebate_amount);
     setMoneyCell(row.querySelector('[data-field-display="net_total"]'), payload.net_total);
     row.querySelectorAll('.is-dirty').forEach(input => input.classList.remove('is-dirty'));
     delete row.dataset.dirty;
@@ -255,14 +343,27 @@ async function saveRow(row) {
 
 document.querySelectorAll('#entries-table [data-field]').forEach(input => {
     fitInput(input);
-    input.classList.toggle('is-negative', parseMoneyInput(input.value || 0) < 0);
+    syncNegativeState(input, parseMoneyInput(input.value || 0) < 0);
     input.addEventListener('input', event => {
-        event.target.classList.toggle('is-negative', parseMoneyInput(event.target.value || 0) < 0);
+        syncNegativeState(event.target, parseMoneyInput(event.target.value || 0) < 0);
         fitInput(event.target);
         markDirty(event.target);
         if (event.target.classList.contains('sum-source')) {
             updateRowBlackRed(event.target.closest('tr'));
         }
+        refreshRowPreview(event.target.closest('tr'));
+        recalcTotals();
+    });
+});
+
+document.querySelector('#ha-win').addEventListener('click', () => applyResult('ha'));
+document.querySelector('#ou-win').addEventListener('click', () => applyResult('ou'));
+
+document.querySelectorAll('[data-edit-entry]').forEach(button => {
+    button.addEventListener('click', event => {
+        const row = event.target.closest('tr');
+        row.querySelector('[data-field]')?.focus();
+        row.querySelectorAll('[data-field]').forEach(markDirty);
     });
 });
 
@@ -281,7 +382,7 @@ document.querySelector('#save-all-entries').addEventListener('click', async even
         button.textContent = 'Saved';
         setTimeout(() => button.textContent = 'Save', 1000);
     } catch (error) {
-        alert('Save failed. Please check the row values.');
+        alert(error.message || 'Save failed. Please check the row values.');
         button.textContent = 'Save';
     } finally {
         button.disabled = false;
@@ -309,10 +410,15 @@ document.querySelectorAll('.signed-money-input').forEach(input => {
     input.addEventListener('focus', event => unformatSignedInput(event.target));
     input.addEventListener('blur', event => {
         formatSignedInput(event.target);
+        syncNegativeState(event.target, parseMoneyInput(event.target.value || 0) < 0);
         fitInput(event.target);
     });
 });
+document.querySelectorAll('[data-field-display]').forEach(cell => {
+    syncNegativeState(cell, Number(cell.dataset.value || 0) < 0);
+});
 updateNewBetShare();
 updateNewBlackRed();
+updateNewRebateAmount();
 </script>
 @endpush

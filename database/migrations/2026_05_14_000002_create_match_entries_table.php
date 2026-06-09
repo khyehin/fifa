@@ -18,6 +18,8 @@ return new class extends Migration
             $table->decimal('black_red_amount', 12, 2)->default(0);
             $table->decimal('my_percent', 8, 4)->default(1);
             $table->decimal('my_winlose', 12, 2)->default(0);
+            $table->decimal('rebate_percent', 8, 4)->default(0);
+            $table->decimal('rebate_amount', 12, 2)->default(0);
             $table->decimal('run_ticket', 12, 2)->default(0);
             $table->text('remarks')->nullable();
             $table->timestamps();

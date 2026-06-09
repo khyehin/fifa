@@ -18,6 +18,8 @@ class MatchEntry extends Model
         'black_red_amount',
         'my_percent',
         'my_winlose',
+        'rebate_percent',
+        'rebate_amount',
         'run_ticket',
         'remarks',
     ];
@@ -29,6 +31,8 @@ class MatchEntry extends Model
             'black_red_amount' => 'decimal:2',
             'my_percent' => 'decimal:4',
             'my_winlose' => 'decimal:2',
+            'rebate_percent' => 'decimal:4',
+            'rebate_amount' => 'decimal:2',
             'run_ticket' => 'decimal:2',
         ];
     }
@@ -37,6 +41,9 @@ class MatchEntry extends Model
     {
         static::saving(function (self $entry) {
             $entry->my_winlose = round((float) $entry->black_red_amount * (float) $entry->my_percent * -1, 2);
+            $entry->rebate_amount = (float) $entry->black_red_amount < 0
+                ? round(abs((float) $entry->black_red_amount) * (float) $entry->rebate_percent, 2)
+                : 0;
         });
     }
 
@@ -52,7 +59,7 @@ class MatchEntry extends Model
 
     public function getNetTotalAttribute(): float
     {
-        return (float) $this->my_winlose + (float) $this->run_ticket;
+        return (float) $this->my_winlose - (float) $this->rebate_amount - (float) $this->run_ticket;
     }
 
     public function getBetShareAttribute(): float

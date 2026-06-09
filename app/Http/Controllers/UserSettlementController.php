@@ -24,6 +24,7 @@ class UserSettlementController extends Controller
             'bet_amount' => $entries->sum('bet_amount'),
             'black_red' => $entries->sum('black_red_amount'),
             'my_winlose' => $entries->sum('my_winlose'),
+            'rebate_amount' => $entries->sum('rebate_amount'),
             'run_ticket' => $entries->sum('run_ticket'),
             'net_total' => $entries->sum(fn ($entry) => $entry->net_total),
         ];

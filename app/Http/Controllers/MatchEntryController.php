@@ -50,6 +50,7 @@ class MatchEntryController extends Controller
             'ou' => $this->numericValue($request->input('ou')),
             'black_red_amount' => $this->numericValue($request->input('black_red_amount')),
             'my_percent' => $this->numericValue($request->input('my_percent')),
+            'rebate_percent' => $this->numericValue($request->input('rebate_percent')),
             'run_ticket' => $this->numericValue($request->input('run_ticket')),
         ]);
 
@@ -59,6 +60,7 @@ class MatchEntryController extends Controller
             'ou' => ['nullable', 'numeric'],
             'black_red_amount' => ['nullable', 'numeric'],
             'my_percent' => ['nullable', 'numeric'],
+            'rebate_percent' => ['nullable', 'numeric'],
             'run_ticket' => ['nullable', 'numeric'],
             'remarks' => ['nullable', 'string'],
         ];
@@ -91,6 +93,7 @@ class MatchEntryController extends Controller
             'ou' => $data['ou'] ?? null,
             'black_red_amount' => $data['black_red_amount'] ?? 0,
             'my_percent' => $data['my_percent'] ?? $agent->my_percent,
+            'rebate_percent' => $data['rebate_percent'] ?? 0,
             'run_ticket' => $data['run_ticket'] ?? $agent->run_ticket,
             'remarks' => $data['remarks'] ?? null,
         ];
@@ -112,6 +115,8 @@ class MatchEntryController extends Controller
             'my_percent' => number_format((float) $entry->my_percent, 4, '.', ''),
             'bet_share' => number_format((float) $entry->bet_share, 2, '.', ''),
             'my_winlose' => number_format((float) $entry->my_winlose, 2, '.', ''),
+            'rebate_percent' => number_format((float) $entry->rebate_percent, 4, '.', ''),
+            'rebate_amount' => number_format((float) $entry->rebate_amount, 2, '.', ''),
             'run_ticket' => number_format((float) $entry->run_ticket, 2, '.', ''),
             'net_total' => number_format((float) $entry->net_total, 2, '.', ''),
         ];

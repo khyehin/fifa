@@ -21,6 +21,7 @@ class DashboardController extends Controller
             'bet_amount' => $systemEntries->sum('bet_amount'),
             'black_red' => $systemEntries->sum('black_red_amount'),
             'my_winlose' => $systemEntries->sum('my_winlose'),
+            'rebate_amount' => $systemEntries->sum('rebate_amount'),
             'run_ticket' => $systemEntries->sum('run_ticket'),
             'net_total' => $systemEntries->sum(fn ($entry) => $entry->net_total),
         ];
@@ -159,6 +160,7 @@ class DashboardController extends Controller
                     'black_red' => $agentEntries->sum('black_red_amount'),
                     'my_percent' => $firstEntry->my_percent,
                     'my_winlose' => $agentEntries->sum('my_winlose'),
+                    'rebate_amount' => $agentEntries->sum('rebate_amount'),
                     'run_ticket' => $agentEntries->sum('run_ticket'),
                     'net_total' => $agentEntries->sum(fn ($entry) => $entry->net_total),
                 ];
@@ -171,6 +173,7 @@ class DashboardController extends Controller
                 'totals' => [
                     'black_red' => $weekEntries->sum('black_red_amount'),
                     'my_winlose' => $weekEntries->sum('my_winlose'),
+                    'rebate_amount' => $weekEntries->sum('rebate_amount'),
                     'run_ticket' => $weekEntries->sum('run_ticket'),
                     'net_total' => $weekEntries->sum(fn ($entry) => $entry->net_total),
                 ],

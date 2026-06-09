@@ -4,7 +4,7 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <h1 class="h3 mb-0">{{ $agent->username }}</h1>
-        <div class="text-muted">Full settlement history</div>
+        <div class="text-muted">Full betting history</div>
     </div>
     <a class="btn btn-outline-secondary" href="{{ route('agents.index') }}">Agents</a>
 </div>
@@ -18,7 +18,7 @@
 </form>
 
 <div class="row g-3 mb-3">
-    @foreach (['bet_amount' => 'Total Bet', 'black_red' => 'Total Win/Loss', 'my_winlose' => 'Total My W/L', 'run_ticket' => 'Run Tickets', 'net_total' => 'Net Total'] as $key => $label)
+    @foreach (['bet_amount' => 'Total Bet', 'black_red' => 'Total Win/Loss', 'my_winlose' => 'Total My W/L', 'rebate_amount' => 'Rebate', 'run_ticket' => 'Run Tickets', 'net_total' => 'Net Total'] as $key => $label)
         <div class="col-md">
             <div class="card card-body">
                 <div class="text-muted small">{{ $label }}</div>
@@ -30,7 +30,7 @@
 
 <div class="card card-body">
     <table class="table table-sm table-striped" data-datatable>
-        <thead><tr><th>Date</th><th>Match</th><th>Bet</th><th>H/A</th><th>O/U</th><th>Win/Loss</th><th>MY %</th><th>My W/L</th><th>Run</th><th>Net</th></tr></thead>
+        <thead><tr><th>Date</th><th>Match</th><th>Bet</th><th>H/A</th><th>O/U</th><th>Win/Loss</th><th>MY %</th><th>My W/L</th><th>Rebate</th><th>Run</th><th>Net</th></tr></thead>
         <tbody>
         @foreach($entries as $entry)
             <tr>
@@ -42,6 +42,7 @@
                 <td><x-money :value="$entry->black_red_amount" /></td>
                 <td class="percent-col">{{ number_format((float) $entry->my_percent, 4) }}</td>
                 <td><x-money :value="$entry->my_winlose" /></td>
+                <td><x-money :value="$entry->rebate_amount" /></td>
                 <td><x-money :value="$entry->run_ticket" /></td>
                 <td><x-money :value="$entry->net_total" /></td>
             </tr>
