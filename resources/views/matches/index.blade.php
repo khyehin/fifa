@@ -19,8 +19,21 @@
 </form>
 
 <div class="card card-body">
-    <table class="table table-sm table-striped" data-datatable>
-        <thead><tr><th>Date</th><th>Title</th><th>Home</th><th>Away</th><th>Rows</th><th>Remarks</th><th></th></tr></thead>
+    @php
+        $dateOrder = request('date_order') === 'asc' ? 'asc' : 'desc';
+        $nextDateOrder = $dateOrder === 'asc' ? 'desc' : 'asc';
+    @endphp
+    <table class="table table-sm table-striped">
+        <thead>
+            <tr>
+                <th>
+                    <a class="text-decoration-none text-reset" href="{{ route('matches.index', array_merge(request()->except('page'), ['date_order' => $nextDateOrder])) }}">
+                        Date {{ $dateOrder === 'asc' ? 'Oldest First' : 'Latest First' }}
+                    </a>
+                </th>
+                <th>Title</th><th>Home</th><th>Away</th><th>Rows</th><th>Remarks</th><th></th>
+            </tr>
+        </thead>
         <tbody>
         @foreach ($matches as $match)
             <tr>

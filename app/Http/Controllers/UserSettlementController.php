@@ -13,8 +13,7 @@ class UserSettlementController extends Controller
             ->with('footballMatch')
             ->whereHas('footballMatch', function ($query) use ($request) {
                 $query->when(! $request->boolean('date_all') && $request->filled('date'), fn ($q) => $q->whereDate('match_date', $request->date))
-                    ->when(! $request->boolean('date_all') && $request->filled('date_from'), fn ($q) => $q->whereDate('match_date', '>=', $request->date_from))
-                    ->when(! $request->boolean('date_all') && $request->filled('date_to'), fn ($q) => $q->whereDate('match_date', '<=', $request->date_to))
+                    ->when(! $request->boolean('date_all') && ! $request->filled('date'), fn ($q) => $this->applyDateRange($q, $request))
                     ->when($request->filled('match'), fn ($q) => $q->where('title', 'like', '%' . $request->match . '%'));
             })
             ->get()
@@ -30,5 +29,19 @@ class UserSettlementController extends Controller
         ];
 
         return view('users.show', compact('agent', 'entries', 'totals'));
+    }
+
+    private function applyDateRange($query, Request $request)
+    {
+        if ($request->filled('date_from') && $request->filled('date_to')) {
+            return $query->whereDate('match_date', '>=', $request->date_from)
+                ->whereDate('match_date', '<=', $request->date_to);
+        }
+
+        if ($request->filled('date_from') || $request->filled('date_to')) {
+            return $query->whereDate('match_date', $request->date_from ?: $request->date_to);
+        }
+
+        return $query;
     }
 }

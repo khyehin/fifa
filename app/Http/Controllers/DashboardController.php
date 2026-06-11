@@ -13,9 +13,12 @@ class DashboardController extends Controller
 {
     public function index(Request $request)
     {
+        $hasDateFilter = $this->hasDateFilter($request);
         $request = $this->withDefaultAll($request);
         $entries = $this->filteredEntries($request)->get();
         $systemEntries = MatchEntry::query()->get();
+        $currentWeekStart = now()->startOfWeek(Carbon::MONDAY);
+        $currentWeekEnd = now()->endOfWeek(Carbon::SUNDAY);
 
         $systemTotals = [
             'bet_amount' => $systemEntries->sum('bet_amount'),
@@ -27,9 +30,9 @@ class DashboardController extends Controller
         ];
 
         $matchByDate = FootballMatch::with('entries')
-            ->when(! $request->boolean('date_all') && $request->filled('date'), fn ($q) => $q->whereDate('match_date', $request->date))
-            ->when(! $request->boolean('date_all') && $request->filled('date_from'), fn ($q) => $q->whereDate('match_date', '>=', $request->date_from))
-            ->when(! $request->boolean('date_all') && $request->filled('date_to'), fn ($q) => $q->whereDate('match_date', '<=', $request->date_to))
+            ->when(! $hasDateFilter, fn ($q) => $q->whereDate('match_date', '>=', $currentWeekStart)->whereDate('match_date', '<=', $currentWeekEnd))
+            ->when($hasDateFilter && ! $request->boolean('date_all') && $request->filled('date'), fn ($q) => $q->whereDate('match_date', $request->date))
+            ->when($hasDateFilter && ! $request->boolean('date_all') && ! $request->filled('date'), fn ($q) => $this->applyDateRange($q, $request))
             ->when($request->filled('match'), fn ($q) => $q->where('title', 'like', '%' . $request->match . '%'))
             ->when($request->filled('team'), function ($q) use ($request) {
                 $q->where(function ($teamQuery) use ($request) {
@@ -41,7 +44,7 @@ class DashboardController extends Controller
             ->orderBy('title')
             ->get()
             ->groupBy(fn ($match) => $match->match_date->format('Y-m-d'))
-            ->sortKeysDesc();
+            ->sortKeys();
 
         $agents = Agent::query()
             ->when($request->filled('username'), fn ($q) => $q->where('username', 'like', '%' . $request->username . '%'))
@@ -58,8 +61,7 @@ class DashboardController extends Controller
         return MatchEntry::with(['agent', 'footballMatch'])
             ->whereHas('footballMatch', function ($query) use ($request) {
                 $query->when(! $request->boolean('date_all') && $request->filled('date'), fn ($q) => $q->whereDate('match_date', $request->date))
-                    ->when(! $request->boolean('date_all') && $request->filled('date_from'), fn ($q) => $q->whereDate('match_date', '>=', $request->date_from))
-                    ->when(! $request->boolean('date_all') && $request->filled('date_to'), fn ($q) => $q->whereDate('match_date', '<=', $request->date_to))
+                    ->when(! $request->boolean('date_all') && ! $request->filled('date'), fn ($q) => $this->applyDateRange($q, $request))
                     ->when($request->filled('match'), fn ($q) => $q->where('title', 'like', '%' . $request->match . '%'))
                     ->when($request->filled('team'), function ($q) use ($request) {
                         $q->where(function ($teamQuery) use ($request) {
@@ -70,6 +72,14 @@ class DashboardController extends Controller
             })
             ->whereHas('agent', fn ($query) => $query->when($request->filled('username'), fn ($q) => $q->where('username', 'like', '%' . $request->username . '%')))
             ->latest('updated_at');
+    }
+
+    private function hasDateFilter(Request $request): bool
+    {
+        return $request->boolean('date_all')
+            || $request->filled('date')
+            || $request->filled('date_from')
+            || $request->filled('date_to');
     }
 
     private function withDefaultAll(Request $request): Request
@@ -83,6 +93,20 @@ class DashboardController extends Controller
         return $request;
     }
 
+    private function applyDateRange($query, Request $request)
+    {
+        if ($request->filled('date_from') && $request->filled('date_to')) {
+            return $query->whereDate('match_date', '>=', $request->date_from)
+                ->whereDate('match_date', '<=', $request->date_to);
+        }
+
+        if ($request->filled('date_from') || $request->filled('date_to')) {
+            return $query->whereDate('match_date', $request->date_from ?: $request->date_to);
+        }
+
+        return $query;
+    }
+
     private function dateColumns(Request $request, $entries): array
     {
         if ($request->filled('date')) {
@@ -93,7 +117,7 @@ class DashboardController extends Controller
             $start = Carbon::parse($request->date_from ?: $request->date_to);
             $end = Carbon::parse($request->date_to ?: $request->date_from);
 
-            return collect(CarbonPeriod::create($start, $end))->sortDesc()->values()->all();
+            return collect(CarbonPeriod::create($start, $end))->values()->all();
         }
 
         $dates = $entries

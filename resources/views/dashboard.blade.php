@@ -67,7 +67,10 @@
 <div class="card card-body mb-3">
     <div class="d-flex justify-content-between align-items-center mb-2">
         <h2 class="h5 mb-0">Match by Date</h2>
-        <a href="{{ route('matches.index') }}" class="btn btn-sm btn-outline-secondary">All Matches</a>
+        <div class="d-flex align-items-center gap-2">
+            <span class="text-muted small">This week</span>
+            <a href="{{ route('matches.index') }}" class="btn btn-sm btn-outline-secondary">All Matches</a>
+        </div>
     </div>
     @forelse($matchByDate as $date => $matches)
         <div class="table-responsive mb-3">
@@ -115,7 +118,7 @@
 <div class="card card-body">
     <div class="d-flex justify-content-between align-items-center mb-2">
         <h2 class="h5 mb-0">Weekly Detail</h2>
-        <div class="text-muted small">Newest week first</div>
+        <div class="text-muted small">All weeks</div>
     </div>
 
     @foreach($weeklySheets as $sheet)

@@ -229,6 +229,7 @@
                                 fromInput.value = key;
                             } else {
                                 toInput.value = key;
+                                root.querySelector('[data-drp-container]').style.display = 'none';
                             }
                             setDisplay(root);
                             render(root);

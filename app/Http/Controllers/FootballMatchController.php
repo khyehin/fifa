@@ -10,20 +10,37 @@ class FootballMatchController extends Controller
 {
     public function index(Request $request)
     {
+        $dateOrder = $request->date_order === 'asc' ? 'asc' : 'desc';
+
         $matches = FootballMatch::withCount('entries')
-            ->when(! $request->boolean('date_all') && $request->filled('date_from'), fn ($q) => $q->whereDate('match_date', '>=', $request->date_from))
-            ->when(! $request->boolean('date_all') && $request->filled('date_to'), fn ($q) => $q->whereDate('match_date', '<=', $request->date_to))
+            ->when(! $request->boolean('date_all'), fn ($q) => $this->applyDateRange($q, $request))
             ->when($request->filled('q'), function ($q) use ($request) {
-                $q->where('title', 'like', '%' . $request->q . '%')
-                    ->orWhere('home_team', 'like', '%' . $request->q . '%')
-                    ->orWhere('away_team', 'like', '%' . $request->q . '%');
+                $q->where(function ($search) use ($request) {
+                    $search->where('title', 'like', '%' . $request->q . '%')
+                        ->orWhere('home_team', 'like', '%' . $request->q . '%')
+                        ->orWhere('away_team', 'like', '%' . $request->q . '%');
+                });
             })
-            ->orderByDesc('match_date')
+            ->orderBy('match_date', $dateOrder)
             ->orderBy('title')
             ->paginate(30)
             ->withQueryString();
 
         return view('matches.index', compact('matches'));
+    }
+
+    private function applyDateRange($query, Request $request)
+    {
+        if ($request->filled('date_from') && $request->filled('date_to')) {
+            return $query->whereDate('match_date', '>=', $request->date_from)
+                ->whereDate('match_date', '<=', $request->date_to);
+        }
+
+        if ($request->filled('date_from') || $request->filled('date_to')) {
+            return $query->whereDate('match_date', $request->date_from ?: $request->date_to);
+        }
+
+        return $query;
     }
 
     public function create()
