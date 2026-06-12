@@ -44,15 +44,20 @@ class MatchEntryController extends Controller
 
     private function validated(Request $request, bool $requireUser = true): array
     {
-        $request->merge([
+        $normalized = [
             'bet_amount' => $this->numericValue($request->input('bet_amount')),
             'ha' => $this->numericValue($request->input('ha')),
             'ou' => $this->numericValue($request->input('ou')),
             'black_red_amount' => $this->numericValue($request->input('black_red_amount')),
             'my_percent' => $this->numericValue($request->input('my_percent')),
-            'rebate_percent' => $this->numericValue($request->input('rebate_percent')),
             'run_ticket' => $this->numericValue($request->input('run_ticket')),
-        ]);
+        ];
+
+        if ($request->has('rebate_percent')) {
+            $normalized['rebate_percent'] = $this->numericValue($request->input('rebate_percent'));
+        }
+
+        $request->merge($normalized);
 
         $rules = [
             'bet_amount' => ['nullable', 'numeric'],

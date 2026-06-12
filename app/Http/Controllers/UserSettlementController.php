@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Agent;
+use App\Models\AgentWeeklyRebate;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class UserSettlementController extends Controller
@@ -19,13 +21,27 @@ class UserSettlementController extends Controller
             ->get()
             ->sortByDesc(fn ($entry) => $entry->footballMatch->match_date);
 
+        $weeklyRebates = AgentWeeklyRebate::where('agent_id', $agent->id)
+            ->get()
+            ->keyBy(fn (AgentWeeklyRebate $rebate) => $rebate->week_start->format('Y-m-d'));
+
+        $weeklyRebate = $entries
+            ->groupBy(fn ($entry) => $entry->footballMatch->match_date->copy()->startOfWeek(Carbon::MONDAY)->format('Y-m-d'))
+            ->map(function ($weekEntries, string $weekStart) use ($weeklyRebates) {
+                $blackRedTotal = (float) $weekEntries->sum('black_red_amount');
+                $rebatePercent = (float) optional($weeklyRebates->get($weekStart))->rebate_percent;
+
+                return $blackRedTotal < 0 ? round(abs($blackRedTotal) * $rebatePercent, 2) : 0;
+            })
+            ->sum();
+
         $totals = [
             'bet_amount' => $entries->sum('bet_amount'),
             'black_red' => $entries->sum('black_red_amount'),
             'my_winlose' => $entries->sum('my_winlose'),
-            'rebate_amount' => $entries->sum('rebate_amount'),
+            'rebate_amount' => $weeklyRebate,
             'run_ticket' => $entries->sum('run_ticket'),
-            'net_total' => $entries->sum(fn ($entry) => $entry->net_total),
+            'net_total' => $entries->sum(fn ($entry) => $entry->net_total) - $weeklyRebate,
         ];
 
         return view('users.show', compact('agent', 'entries', 'totals'));

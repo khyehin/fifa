@@ -30,7 +30,7 @@
 
 <div class="card card-body">
     <table class="table table-sm table-striped" data-datatable>
-        <thead><tr><th>Date</th><th>Match</th><th>Bet</th><th>H/A</th><th>O/U</th><th>Win/Loss</th><th>MY %</th><th>My W/L</th><th>Rebate</th><th>Run</th><th>Net</th></tr></thead>
+        <thead><tr><th>Date</th><th>Match</th><th>Bet</th><th>H/A</th><th>O/U</th><th>Win/Loss</th><th>MY %</th><th>My W/L</th><th>Run</th><th>Net</th></tr></thead>
         <tbody>
         @foreach($entries as $entry)
             <tr>
@@ -42,7 +42,6 @@
                 <td><x-money :value="$entry->black_red_amount" /></td>
                 <td class="percent-col">{{ number_format((float) $entry->my_percent, 4) }}</td>
                 <td><x-money :value="$entry->my_winlose" /></td>
-                <td><x-money :value="$entry->rebate_amount" /></td>
                 <td><x-money :value="$entry->run_ticket" /></td>
                 <td><x-money :value="$entry->net_total" /></td>
             </tr>

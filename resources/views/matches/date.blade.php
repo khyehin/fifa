@@ -17,7 +17,6 @@
         $totalBet = $match->entries->sum('bet_amount');
         $totalWinLose = $match->entries->sum('black_red_amount');
         $totalMyWinLose = $match->entries->sum('my_winlose');
-        $totalRebate = $match->entries->sum('rebate_amount');
         $totalRun = $match->entries->sum('run_ticket');
         $totalNet = $match->entries->sum(fn($entry) => $entry->net_total);
     @endphp
@@ -37,7 +36,6 @@
                         <th>Black H/O, Red A/U</th>
                         <th class="percent-col">MY %</th>
                         <th>My Win/Lose</th>
-                        <th>Rebate</th>
                         <th>Run Tickets</th>
                         <th>Total</th>
                     </tr>
@@ -52,7 +50,6 @@
                         <td><x-money :value="$entry->black_red_amount" /></td>
                         <td class="percent-col">{{ number_format((float) $entry->my_percent, 4) }}</td>
                         <td><x-money :value="$entry->my_winlose" /></td>
-                        <td><x-money :value="$entry->rebate_amount" /></td>
                         <td><x-money :value="$entry->run_ticket" /></td>
                         <td><x-money :value="$entry->net_total" /></td>
                     </tr>
@@ -67,7 +64,6 @@
                         <td><x-money :value="$totalWinLose" /></td>
                         <td></td>
                         <td><x-money :value="$totalMyWinLose" /></td>
-                        <td><x-money :value="$totalRebate" /></td>
                         <td><x-money :value="$totalRun" /></td>
                         <td><x-money :value="$totalNet" /></td>
                     </tr>

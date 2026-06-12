@@ -77,7 +77,7 @@
             <table class="table table-sm table-bordered align-middle mb-0">
                 <thead>
                     <tr class="table-success">
-                        <th colspan="8">
+                        <th colspan="7">
                             <div class="d-flex justify-content-between align-items-center">
                                 <span>{{ $date }}</span>
                                 <a class="btn btn-sm btn-outline-dark" href="{{ route('match-dates.show', $date) }}">Open Date Sheet</a>
@@ -85,14 +85,13 @@
                         </th>
                     </tr>
                     <tr>
-                        <th>Match</th><th>Home</th><th>Away</th><th>Lines</th><th>Win/Lose</th><th>Rebate</th><th>Run Tickets</th><th>Total</th>
+                        <th>Match</th><th>Home</th><th>Away</th><th>Lines</th><th>Win/Lose</th><th>Run Tickets</th><th>Total</th>
                     </tr>
                 </thead>
                 <tbody>
                 @foreach($matches as $match)
                     @php
                         $matchWinLose = $match->entries->sum('black_red_amount');
-                        $matchRebate = $match->entries->sum('rebate_amount');
                         $matchRun = $match->entries->sum('run_ticket');
                         $matchTotal = $match->entries->sum(fn($entry) => $entry->net_total);
                     @endphp
@@ -102,7 +101,6 @@
                         <td>{{ $match->away_team }}</td>
                         <td>{{ $match->entries->count() }}</td>
                         <td><x-money :value="$matchWinLose" /></td>
-                        <td><x-money :value="$matchRebate" /></td>
                         <td><x-money :value="$matchRun" /></td>
                         <td><x-money :value="$matchTotal" /></td>
                     </tr>
@@ -134,6 +132,7 @@
                     <th class="text-danger">Win/Lose</th>
                     <th class="text-danger percent-col">MY %</th>
                     <th class="text-danger">My Win/Lose</th>
+                    <th class="percent-col">Rebate %</th>
                     <th>Rebate</th>
                     <th>Run Tickets</th>
                     <th>Total</th>
@@ -155,6 +154,17 @@
                     <td><x-money :value="$row['black_red']" /></td>
                     <td class="percent-col">{{ number_format((float) $row['my_percent'], 4) }}</td>
                     <td><x-money :value="$row['my_winlose']" /></td>
+                    <td class="percent-col">
+                        <input
+                            class="excel-input percent-input"
+                            type="number"
+                            step="0.0001"
+                            value="{{ number_format((float) $row['rebate_percent'], 4, '.', '') }}"
+                            data-weekly-rebate
+                            data-agent-id="{{ $row['agent']->id }}"
+                            data-week-start="{{ $sheet['week_start'] }}"
+                        >
+                    </td>
                     <td><x-money :value="$row['rebate_amount']" /></td>
                     <td><x-money :value="$row['run_ticket']" /></td>
                     <td><x-money :value="$row['net_total']" /></td>
@@ -167,6 +177,7 @@
                     <td><x-money :value="$sheet['totals']['black_red']" /></td>
                     <td></td>
                     <td><x-money :value="$sheet['totals']['my_winlose']" /></td>
+                    <td></td>
                     <td><x-money :value="$sheet['totals']['rebate_amount']" /></td>
                     <td><x-money :value="$sheet['totals']['run_ticket']" /></td>
                     <td><x-money :value="$sheet['totals']['net_total']" /></td>
@@ -177,3 +188,35 @@
     @endforeach
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.querySelectorAll('[data-weekly-rebate]').forEach(input => {
+    input.addEventListener('change', async event => {
+        const field = event.target;
+        field.classList.add('is-dirty');
+        const response = await fetch('{{ route('weekly-rebates.update') }}', {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({
+                agent_id: field.dataset.agentId,
+                week_start: field.dataset.weekStart,
+                rebate_percent: field.value || 0,
+            }),
+        });
+
+        if (!response.ok) {
+            alert('Rebate % could not be saved.');
+            field.classList.remove('is-dirty');
+            return;
+        }
+
+        window.location.reload();
+    });
+});
+</script>
+@endpush

@@ -29,6 +29,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('password.changed')->group(function () {
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('/dashboard', [DashboardController::class, 'index']);
+        Route::patch('/weekly-rebates', [DashboardController::class, 'updateWeeklyRebate'])->name('weekly-rebates.update');
 
         Route::get('/agents/search', [AgentController::class, 'search'])->name('agents.search');
         Route::post('/agents/quick-create', [AgentController::class, 'quickCreate'])->name('agents.quick-create');

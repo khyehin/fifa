@@ -21,7 +21,6 @@
     <div class="col-md"><div class="card card-body"><div class="text-muted small">O/U Total</div><div class="summary-number" data-total="ou">0.00</div></div></div>
     <div class="col-md"><div class="card card-body"><div class="text-muted small">Win/Loss</div><div class="summary-number" data-total="black_red_amount">0.00</div></div></div>
     <div class="col-md"><div class="card card-body"><div class="text-muted small">My Win/Loss</div><div class="summary-number" data-total="my_winlose">0.00</div></div></div>
-    <div class="col-md"><div class="card card-body"><div class="text-muted small">Rebate</div><div class="summary-number" data-total="rebate_amount">0.00</div></div></div>
     <div class="col-md"><div class="card card-body"><div class="text-muted small">Run Ticket</div><div class="summary-number" data-total="run_ticket">0.00</div></div></div>
     <div class="col-md"><div class="card card-body"><div class="text-muted small">Net Total</div><div class="summary-number" data-total="net_total">0.00</div></div></div>
 </div>
@@ -45,8 +44,6 @@
         <div class="col-lg-2"><label class="form-label">Black/Red</label><input type="text" inputmode="decimal" name="black_red_amount" class="form-control signed-money-input" value="0.00"></div>
         <div class="col-lg-1"><label class="form-label">MY %</label><input type="number" step="0.0001" name="my_percent" class="form-control percent-input"></div>
         <div class="col-lg-1"><label class="form-label">Bet x MY%</label><input id="entry-bet-share" class="form-control" value="0.00" readonly></div>
-        <div class="col-lg-1"><label class="form-label">Rebate %</label><input type="number" step="0.0001" name="rebate_percent" class="form-control percent-input" value="0"></div>
-        <div class="col-lg-1"><label class="form-label">Rebate</label><input id="entry-rebate-amount" class="form-control" value="0.00" readonly></div>
         <div class="col-lg-1"><label class="form-label">Run</label><input type="text" inputmode="decimal" name="run_ticket" class="form-control signed-money-input"></div>
         <div class="col-lg-1"><label class="form-label">Remarks</label><input name="remarks" class="form-control"></div>
         <div class="col-lg-1"><button class="btn btn-primary w-100">Add</button></div>
@@ -56,7 +53,7 @@
 <div class="card card-body">
     <div class="table-responsive">
         <table class="table table-sm table-bordered align-middle auto-table" id="entries-table">
-            <thead><tr><th>User</th><th>Bet Amount</th><th>H/A</th><th>O/U</th><th>Black H/O, Red A/U</th><th class="percent-col">MY %</th><th>Bet x MY%</th><th>My Win/Lose</th><th class="percent-col">Rebate %</th><th>Rebate</th><th>Run Tickets</th><th>Net Total</th><th>Remarks</th><th></th></tr></thead>
+            <thead><tr><th>User</th><th>Bet Amount</th><th>H/A</th><th>O/U</th><th>Black H/O, Red A/U</th><th class="percent-col">MY %</th><th>Bet x MY%</th><th>My Win/Lose</th><th>Run Tickets</th><th>Net Total</th><th>Remarks</th><th></th></tr></thead>
             <tbody>
             @foreach($match->entries->sortBy(fn($entry) => $entry->agent->username) as $entry)
                 <tr data-entry-id="{{ $entry->id }}">
@@ -68,8 +65,6 @@
                     <td class="percent-col"><input class="excel-input row-number percent-input" data-field="my_percent" type="number" step="0.0001" value="{{ $entry->my_percent }}"></td>
                     <td data-field-display="bet_share" data-value="{{ $entry->bet_share }}"><x-money :value="$entry->bet_share" /></td>
                     <td data-field-display="my_winlose" data-value="{{ $entry->my_winlose }}"><x-money :value="$entry->my_winlose" /></td>
-                    <td class="percent-col"><input class="excel-input row-number percent-input" data-field="rebate_percent" type="number" step="0.0001" value="{{ $entry->rebate_percent }}"></td>
-                    <td data-field-display="rebate_amount" data-value="{{ $entry->rebate_amount }}"><x-money :value="$entry->rebate_amount" /></td>
                     <td><input class="excel-input row-number signed-money-input" data-field="run_ticket" type="text" inputmode="decimal" value="{{ (float) $entry->run_ticket < 0 ? '(' . number_format(abs((float) $entry->run_ticket), 2) . ')' : number_format((float) $entry->run_ticket, 2) }}"></td>
                     <td data-field-display="net_total" data-value="{{ $entry->net_total }}"><x-money :value="$entry->net_total" /></td>
                     <td><input class="excel-input" data-field="remarks" value="{{ $entry->remarks }}"></td>
@@ -148,29 +143,18 @@ function calculateBetShare(row) {
 function calculateRowValues(row) {
     const blackRed = parseMoneyInput(row.querySelector('[data-field="black_red_amount"]')?.value || 0);
     const myPercent = Number(row.querySelector('[data-field="my_percent"]')?.value || 0);
-    const rebatePercent = Number(row.querySelector('[data-field="rebate_percent"]')?.value || 0);
     const runTicket = parseMoneyInput(row.querySelector('[data-field="run_ticket"]')?.value || 0);
     const myWinlose = blackRed * myPercent * -1;
-    const rebate = blackRed < 0 ? Math.abs(blackRed) * rebatePercent : 0;
-    const netTotal = myWinlose - rebate - runTicket;
+    const netTotal = myWinlose - runTicket;
 
-    return {blackRed, myWinlose, rebate, netTotal};
+    return {blackRed, myWinlose, netTotal};
 }
 
 function refreshRowPreview(row) {
     const values = calculateRowValues(row);
     setMoneyCell(row.querySelector('[data-field-display="bet_share"]'), calculateBetShare(row));
     setMoneyCell(row.querySelector('[data-field-display="my_winlose"]'), values.myWinlose);
-    setMoneyCell(row.querySelector('[data-field-display="rebate_amount"]'), values.rebate);
     setMoneyCell(row.querySelector('[data-field-display="net_total"]'), values.netTotal);
-}
-
-function updateNewRebateAmount() {
-    const form = document.querySelector('#new-entry-form');
-    const blackRed = parseMoneyInput(form.black_red_amount.value || 0);
-    const rebatePercent = Number(form.rebate_percent.value || 0);
-    const rebate = blackRed < 0 ? Math.abs(blackRed) * rebatePercent : 0;
-    document.querySelector('#entry-rebate-amount').value = money(rebate);
 }
 
 function fitInput(input) {
@@ -202,7 +186,6 @@ function updateNewBlackRed() {
     const total = parseMoneyInput(form.ha.value || 0) + parseMoneyInput(form.ou.value || 0);
     form.black_red_amount.value = String(total);
     formatSignedInput(form.black_red_amount);
-    updateNewRebateAmount();
 }
 
 function updateNewBetShare() {
@@ -231,14 +214,13 @@ function applyResult(winner) {
 }
 
 function recalcTotals() {
-    const totals = {bet_amount:0, ha:0, ou:0, black_red_amount:0, my_winlose:0, rebate_amount:0, run_ticket:0, net_total:0};
+    const totals = {bet_amount:0, ha:0, ou:0, black_red_amount:0, my_winlose:0, run_ticket:0, net_total:0};
     document.querySelectorAll('#entries-table tbody tr').forEach(row => {
         totals.bet_amount += Number(row.querySelector('[data-field="bet_amount"]')?.value || 0);
         totals.ha += parseMoneyInput(row.querySelector('[data-field="ha"]')?.value || 0);
         totals.ou += parseMoneyInput(row.querySelector('[data-field="ou"]')?.value || 0);
         totals.black_red_amount += parseMoneyInput(row.querySelector('[data-field="black_red_amount"]')?.value || 0);
         totals.my_winlose += Number(row.querySelector('[data-field-display="my_winlose"]')?.dataset.value || 0);
-        totals.rebate_amount += Number(row.querySelector('[data-field-display="rebate_amount"]')?.dataset.value || 0);
         totals.run_ticket += parseMoneyInput(row.querySelector('[data-field="run_ticket"]')?.value || 0);
         totals.net_total += Number(row.querySelector('[data-field-display="net_total"]')?.dataset.value || 0);
     });
@@ -289,16 +271,12 @@ document.querySelector('#entry-username').addEventListener('change', async event
     form.bet_amount.value = agent.default_bet_amount ?? 0;
     form.my_percent.value = agent.my_percent ?? 1;
     form.run_ticket.value = agent.run_ticket ?? 0;
-    form.rebate_percent.value = 0;
     form.bet_amount.readOnly = Boolean(agent.bet_amount_locked);
     updateNewBetShare();
-    updateNewRebateAmount();
 });
 
 document.querySelector('#new-entry-form').bet_amount.addEventListener('input', updateNewBetShare);
 document.querySelector('#new-entry-form').my_percent.addEventListener('input', updateNewBetShare);
-document.querySelector('#new-entry-form').rebate_percent.addEventListener('input', updateNewRebateAmount);
-document.querySelector('#new-entry-form').black_red_amount.addEventListener('input', updateNewRebateAmount);
 document.querySelector('#new-entry-form').ha.addEventListener('input', () => {
     updateNewBlackRed();
 });
@@ -335,7 +313,6 @@ async function saveRow(row) {
     row.querySelectorAll('.signed-money-input').forEach(formatSignedInput);
     setMoneyCell(row.querySelector('[data-field-display="bet_share"]'), payload.bet_share ?? calculateBetShare(row));
     setMoneyCell(row.querySelector('[data-field-display="my_winlose"]'), payload.my_winlose);
-    setMoneyCell(row.querySelector('[data-field-display="rebate_amount"]'), payload.rebate_amount);
     setMoneyCell(row.querySelector('[data-field-display="net_total"]'), payload.net_total);
     row.querySelectorAll('.is-dirty').forEach(input => input.classList.remove('is-dirty'));
     delete row.dataset.dirty;
@@ -419,6 +396,5 @@ document.querySelectorAll('[data-field-display]').forEach(cell => {
 });
 updateNewBetShare();
 updateNewBlackRed();
-updateNewRebateAmount();
 </script>
 @endpush

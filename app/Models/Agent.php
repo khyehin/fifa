@@ -34,4 +34,9 @@ class Agent extends Model
     {
         return $this->hasMany(MatchEntry::class);
     }
+
+    public function weeklyRebates()
+    {
+        return $this->hasMany(AgentWeeklyRebate::class);
+    }
 }
