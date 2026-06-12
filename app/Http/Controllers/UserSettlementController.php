@@ -28,10 +28,10 @@ class UserSettlementController extends Controller
         $weeklyRebate = $entries
             ->groupBy(fn ($entry) => $entry->footballMatch->match_date->copy()->startOfWeek(Carbon::MONDAY)->format('Y-m-d'))
             ->map(function ($weekEntries, string $weekStart) use ($weeklyRebates) {
-                $blackRedTotal = (float) $weekEntries->sum('black_red_amount');
+                $myWinloseTotal = (float) $weekEntries->sum('my_winlose');
                 $rebatePercent = (float) optional($weeklyRebates->get($weekStart))->rebate_percent;
 
-                return $blackRedTotal < 0 ? round(abs($blackRedTotal) * $rebatePercent, 2) : 0;
+                return $myWinloseTotal > 0 ? round($myWinloseTotal * $rebatePercent, 2) : 0;
             })
             ->sum();
 

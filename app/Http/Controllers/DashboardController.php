@@ -196,8 +196,9 @@ class DashboardController extends Controller
 
                 $firstEntry = $agentEntries->sortBy(fn ($entry) => $entry->footballMatch->match_date)->first();
                 $blackRedTotal = $agentEntries->sum('black_red_amount');
+                $myWinloseTotal = $agentEntries->sum('my_winlose');
                 $rebatePercent = $this->weeklyRebatePercent($weeklyRebates, $agent->id, $weekStart);
-                $rebateAmount = $this->weeklyRebateAmount($blackRedTotal, $rebatePercent);
+                $rebateAmount = $this->weeklyRebateAmount($myWinloseTotal, $rebatePercent);
                 $dailyAmounts = collect($dateColumns)->mapWithKeys(function (Carbon $date) use ($agentEntries) {
                     $dateKey = $date->format('Y-m-d');
                     $amount = $agentEntries
@@ -214,7 +215,7 @@ class DashboardController extends Controller
                     'black_red' => $blackRedTotal,
                     'my_percent' => $firstEntry->my_percent,
                     'rebate_percent' => $rebatePercent,
-                    'my_winlose' => $agentEntries->sum('my_winlose'),
+                    'my_winlose' => $myWinloseTotal,
                     'rebate_amount' => $rebateAmount,
                     'run_ticket' => $agentEntries->sum('run_ticket'),
                     'net_total' => $agentEntries->sum(fn ($entry) => $entry->net_total) - $rebateAmount,
@@ -246,7 +247,7 @@ class DashboardController extends Controller
                 $weekStart = $firstEntry->footballMatch->match_date->copy()->startOfWeek(Carbon::MONDAY);
 
                 return $this->weeklyRebateAmount(
-                    (float) $agentWeekEntries->sum('black_red_amount'),
+                    (float) $agentWeekEntries->sum('my_winlose'),
                     $this->weeklyRebatePercent($weeklyRebates, $firstEntry->agent_id, $weekStart)
                 );
             });
@@ -269,9 +270,9 @@ class DashboardController extends Controller
         return $agentId . '|' . Carbon::parse($weekStart)->startOfWeek(Carbon::MONDAY)->format('Y-m-d');
     }
 
-    private function weeklyRebateAmount(float $blackRedTotal, float $rebatePercent): float
+    private function weeklyRebateAmount(float $myWinloseTotal, float $rebatePercent): float
     {
-        return $blackRedTotal < 0 ? round(abs($blackRedTotal) * $rebatePercent, 2) : 0;
+        return $myWinloseTotal > 0 ? round($myWinloseTotal * $rebatePercent, 2) : 0;
     }
 
     private function weekColumns(Request $request, $entries): array
