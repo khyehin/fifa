@@ -293,6 +293,10 @@
         <div class="topbar">
             <div class="container-fluid page-shell h-100 d-flex align-items-center justify-content-between">
                 <button class="icon-button" id="sidebar-toggle" type="button" aria-label="Toggle sidebar">☰</button>
+                <div class="text-muted small d-flex align-items-center gap-3 h-100">
+                    <span>US {{ now(config('app.timezone'))->format('Y-m-d H:i') }}</span>
+                    <span>MY {{ now('Asia/Singapore')->format('Y-m-d H:i') }}</span>
+                </div>
                 <div class="text-muted small d-flex align-items-center h-100">{{ auth()->user()->username }} - {{ strtoupper(auth()->user()->role) }}</div>
             </div>
         </div>
